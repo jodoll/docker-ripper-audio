@@ -1,4 +1,4 @@
-name: Build Image with MakeMKV from PPA
+name: Build Image
 
 on:
   schedule:
@@ -6,10 +6,11 @@ on:
   push:
     paths-ignore:
       - 'manual-build/**'
+      - 'latest/**'
   workflow_dispatch:
 
 env:
-  ENDPOINT: "rix1337/docker-ripper"
+  ENDPOINT: "jodoll/docker-ripper-audio"
 
 jobs:
   build:
@@ -21,7 +22,7 @@ jobs:
           username: "${{ secrets.DOCKERUSER }}"
           password: "${{ secrets.DOCKERPASS }}"
           image_name: "${{ env.ENDPOINT }}"
-          image_tag: latest,ppa-latest
+          image_tag: latest
           context: "./"
-          dockerfile: "./latest/Dockerfile"
-          stages_image_name: "rix1337/cache-ripper-latest"
+          dockerfile: "./audio/Dockerfile"
+          stages_image_name: "jodoll/cache-ripper-latest"

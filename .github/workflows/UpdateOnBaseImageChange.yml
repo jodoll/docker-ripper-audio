@@ -4,8 +4,8 @@ on:
     - cron: "0 */6 * * *"
     
 env:
-  IMAGE_BASE: phusion/baseimage:focal-1.0.0
-  IMAGE: rix1337/docker-ripper
+  IMAGE_BASE: ubuntu:noble
+  IMAGE: jodoll/docker-ripper-audio
 
 jobs:
   check-base-image:
