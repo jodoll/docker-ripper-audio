@@ -19,8 +19,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: whoan/docker-build-with-cache-action@v6
         with:
-          username: "${{ secrets.DOCKERUSER }}"
-          password: "${{ secrets.DOCKERPASS }}"
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           image_name: "${{ env.ENDPOINT }}"
           image_tag: latest
           context: "./"
