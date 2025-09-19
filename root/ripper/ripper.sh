@@ -50,14 +50,10 @@ BAD_RESPONSE=0
 DISC_TYPE=""
 # Define the drive types and patterns to match against the output of makemkvcon
 declare -A DRIVE_TYPE_PATTERNS=(
-   [empty]='DRV:[0-9]+,0,999,0,"'
-   [open]='DRV:[0-9]+,1,999,0,"'
+   [empty]='No disc is inserted'
+   [open]='drive is not ready'
    [loading]='DRV:[0-9]+,3,999,0,"'
-   [bd1]='DRV:[0-9]+,2,999,12,"'
-   [bd2]='DRV:[0-9]+,2,999,28,"'
-   [dvd]='DRV:[0-9]+,2,999,1,"'
-   [cd1]='DRV:[0-9]+,2,999,0,"'
-   [cd2]='","","'$DRIVE'"'
+   [audio]='audio disc'
 )
 
 debug_log() {
@@ -99,7 +95,7 @@ cleanup_tmp_files() {
 
 check_disc() {
    debug_log "Checking disc."
-   INFO=$(makemkvcon -r --cache=1 info disc:9999 | grep DRV:.*$DRIVE)
+   INFO=$(setcd -i $DRIVE | tail -n +2 | head -n 1)
    debug_log "INFO: $INFO"
    DISC_TYPE="" # Clear previous disc type value
 
@@ -121,54 +117,6 @@ check_disc() {
    fi
 }
 
-handle_bd_disc() {
-   local disc_info="$1"
-   debug_log "Handling BluRay disc."
-   local disc_label="$(echo "$disc_info" | grep -o -P '(?<=",").*(?=",")')"
-   local bd_path
-   bd_path=$(get_disc_directory "$STORAGE_BD" "$disc_label" "$TIMESTAMPPREFIX")
-   local disc_number="$(echo "$disc_info" | grep "$DRIVE" | cut -c5)"
-   debug_log "Disc label: $disc_label, Disc number: $disc_number, BD path: $bd_path"
-   mkdir -p "$bd_path"
-
-   local alt_rip="${RIPPER_DIR}/BLURAYrip.sh"
-   if [[ -f $alt_rip && -x $alt_rip ]]; then
-      printf "%s : BluRay detected: Executing %s\n" "$(date "+%d.%m.%Y %T")" "$alt_rip"
-      debug_log "Executing alternative BluRay rip script."
-      $alt_rip "$disc_number" "$bd_path" "$LOGFILE"
-   else
-      printf "%s : BluRay detected: Saving MKV\n" "$(date "+%d.%m.%Y %T")"
-      debug_log "Saving BluRay as MKV."
-      makemkvcon --profile=/config/default.mmcp.xml -r --decrypt --minlength="$MINIMUMLENGTH" mkv disc:"$disc_number" all "$bd_path" >>"$LOGFILE" 2>&1
-   fi
-
-   move_to_finished "$bd_path" "$STORAGE_BD"
-}
-
-handle_dvd_disc() {
-   local disc_info="$1"
-   debug_log "Handling DVD disc."
-   local disc_label="$(echo "$disc_info" | grep -o -P '(?<=",").*(?=",")')"
-   local dvd_path
-   dvd_path=$(get_disc_directory "$STORAGE_DVD" "$disc_label" "$TIMESTAMPPREFIX")
-   local disc_number="$(echo "$disc_info" | grep "$DRIVE" | cut -c5)"
-   debug_log "Disc label: $disc_label, Disc number: $disc_number, DVD path: $dvd_path"
-   mkdir -p "$dvd_path"
-
-   local alt_rip="${RIPPER_DIR}/DVDrip.sh"
-   if [[ -f $alt_rip && -x $alt_rip ]]; then
-      printf "%s : DVD detected: Executing %s\n" "$(date "+%d.%m.%Y %T")" "$alt_rip"
-      debug_log "Executing alternative DVD rip script."
-      $alt_rip "$disc_number" "$dvd_path" "$LOGFILE"
-   else
-      printf "%s : DVD detected: Saving MKV\n" "$(date "+%d.%m.%Y %T")"
-      debug_log "Saving DVD as MKV."
-      makemkvcon --profile=/config/default.mmcp.xml -r --decrypt --minlength="$MINIMUMLENGTH" mkv disc:"$disc_number" all "$dvd_path" >>"$LOGFILE" 2>&1
-   fi
-
-   move_to_finished "$dvd_path" "$STORAGE_DVD"
-}
-
 handle_cd_disc() {
    local disc_info="$1"
    debug_log "Handling CD disc."
@@ -187,34 +135,6 @@ handle_cd_disc() {
    chown -R "$FILEUSER":"$FILEGROUP" "$STORAGE_CD" && chmod -R "$FILEMODE" "$STORAGE_CD"
    debug_log "Changed owner and permissions for: $STORAGE_CD"
 }
-
-handle_data_disc() {
-   local disc_info="$1"
-   debug_log "Handling data disc."
-   local disc_label="$(echo "$disc_info" | grep "$DRIVE" | grep -o -P '(?<=",").*(?=",")')"
-   local data_directory
-   data_directory=$(get_disc_directory "$STORAGE_DATA" "$disc_label" "$TIMESTAMPPREFIX")
-   local iso_filename="${disc_label}.iso"
-   local iso_path="${data_directory}/${iso_filename}"
-   debug_log "Disc label: $disc_label, ISO path: $iso_path"
-   mkdir -p "$data_directory"
-   local alt_rip="${RIPPER_DIR}/DATArip.sh"
-   if [[ -f $alt_rip && -x $alt_rip ]]; then
-      printf "%s : Data-disc detected: Executing %s\n" "$(date "+%d.%m.%Y %T")" "$alt_rip"
-      debug_log "Executing alternative DATA disc rip script."
-      $alt_rip "$DRIVE" "$iso_path" "$LOGFILE"
-   else
-      printf "%s : Data-disc detected: Saving ISO\n" "$(date "+%d.%m.%Y %T")"
-      debug_log "Saving data-disc as ISO."
-      ddrescue "$DRIVE" "$iso_path" >>"$LOGFILE" 2>&1
-   fi
-   printf "%s : Done saving ISO.\n" "$(date "+%d.%m.%Y %T")"
-   debug_log "Done saving ISO."
-   chown -R "$FILEUSER":"$FILEGROUP" "$STORAGE_DATA" && chmod -R "$FILEMODE" "$STORAGE_DATA"
-   debug_log "Changed owner and permissions for: $STORAGE_DATA"
-   JUST_MADE_ISO=true
-}
-
 
 move_to_finished() {
    local src_path="$1"
@@ -288,13 +208,7 @@ process_disc_type() {
       printf "%s : Disc loading.\n" "$(date "+%d.%m.%Y %T")"
       debug_log "Disc loading."
       ;;
-   "bd1" | "bd2")
-      handle_bd_disc "$INFO"
-      ;;
-   "dvd")
-      handle_dvd_disc "$INFO"
-      ;;
-   "cd1" | "cd2")
+   "audio")
       handle_cd_disc "$INFO"
       ;;
    *)
@@ -326,26 +240,7 @@ launcher_function() {
          ;;
       *)
          if [ "$BAD_RESPONSE" -lt "$BAD_THRESHOLD" ]; then
-            case "$JUSTMAKEISO" in
-            "true")
-               printf "%s : JustMakeISO is enabled. Saving ISO.\n" "$(date "+%d.%m.%Y %T")"
-               debug_log "JustMakeISO is enabled. Saving ISO."
-               handle_data_disc "$INFO"
-               ejectdisc
-               ;;
-            *)
                process_disc_type
-               case "$ALSOMAKEISO" in
-               "true")
-                  # we already handled the disc, so we just need to make the ISO unless we just made an ISO
-                  # we use JUST_MADE_ISO to prevent making an ISO twice it is reset at the beginning of the loop and set to true after making an ISO
-                  printf "%s : AlsoMakeISO is enabled. Saving ISO.\n" "$(date "+%d.%m.%Y %T")"
-                  debug_log "AlsoMakeISO is enabled. Saving ISO."
-                  if [ "$JUST_MADE_ISO" = false ]; then
-                     handle_data_disc "$INFO"
-                  fi
-                  ;;
-               esac
                ejectdisc
                ;;
             esac
