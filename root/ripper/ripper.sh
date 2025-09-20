@@ -53,7 +53,7 @@ declare -A DRIVE_TYPE_PATTERNS=(
    [empty]='No disc is inserted'
    [open]='CD tray is open'
    [loading]='drive is not ready'
-   [audio]='audio disc'
+   [audio]='(audio disc|mixed type CD .*audio)'
 )
 
 debug_log() {
