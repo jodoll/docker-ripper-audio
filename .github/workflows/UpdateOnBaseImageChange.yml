@@ -16,7 +16,7 @@ jobs:
         uses: lucacome/docker-image-update-checker@v1.2.1
         with:
           base-image: ${{ env.IMAGE_BASE }}
-          image: ${{ env.IMAGE }}
+          image: ghcr.io/${{ env.IMAGE }}
       - name: Trigger Docker Image build
         run: |
           curl -XPOST -u "${{ secrets.CR_USER }}:${{secrets.CR_PAT}}" -H "Accept: application/vnd.github.v3+json" -H "Content-Type: application/json" https://api.github.com/repos/${{ env.IMAGE }}/actions/workflows/BuildImage.yml/dispatches
