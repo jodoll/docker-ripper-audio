@@ -27,3 +27,5 @@ RUN apt-get update \
 # Move Files and set permissions
 COPY root/ /
 RUN chmod +x /etc/my_init.d/*.sh
+
+CMD [ "/etc/my_init.d/ripper.sh" ]

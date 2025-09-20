@@ -77,4 +77,4 @@ chmod -R ${FILEMODE} /config
 
 chmod +x /config/ripper.sh
 
-bash /config/ripper.sh &
+bash /config/ripper.sh
