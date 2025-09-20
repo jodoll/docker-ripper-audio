@@ -242,8 +242,6 @@ launcher_function() {
          if [ "$BAD_RESPONSE" -lt "$BAD_THRESHOLD" ]; then
                process_disc_type
                ejectdisc
-               ;;
-            esac
          else
             printf "%s : Too many bad responses, checking stopped.\n" "$(date "+%d.%m.%Y %T")"
             debug_log "Too many bad responses, checking stopped."
