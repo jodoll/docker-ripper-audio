@@ -52,7 +52,7 @@ DISC_TYPE=""
 declare -A DRIVE_TYPE_PATTERNS=(
    [empty]='No disc is inserted'
    [open]='CD tray is open'
-   [loading]='drive is not ready'
+   [loading]='not ready'
    [audio]='(audio disc|mixed type CD .*audio)'
 )
 
