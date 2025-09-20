@@ -51,8 +51,8 @@ DISC_TYPE=""
 # Define the drive types and patterns to match against the output of makemkvcon
 declare -A DRIVE_TYPE_PATTERNS=(
    [empty]='No disc is inserted'
-   [open]='drive is not ready'
-   [loading]='DRV:[0-9]+,3,999,0,"'
+   [open]='CD tray is open'
+   [loading]='drive is not ready'
    [audio]='audio disc'
 )
 
