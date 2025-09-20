@@ -17,10 +17,6 @@ RUN apt-get update \
     id3v2 \
     lame \
     mkcue \
-    python3 \
-    python3-docopt \
-    python3-flask \
-    python3-waitress \
     speex \
     vorbis-tools \
     vorbisgain \
