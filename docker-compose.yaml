@@ -8,8 +8,6 @@ services:
     devices:
       - /dev/sr0:/dev/sr0
       - /dev/sg3:/dev/sg0
-    ports:
-      - 9090:9090
     environment:
       - SEPARATERAWFINISH=true # optional - true/false - separate the raw files from the finished files
       - EJECTENABLED=true # optional - true/false - eject the disc when finished
